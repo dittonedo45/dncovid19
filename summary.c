@@ -50,7 +50,7 @@ static COVID19 info2covid ( info_t * info )
  return ans;
 }
 
-static void insert_case ( COVID19 ** root, info_t * info,
+static void insert_case ( COVID19 ** root, info_t * info, jv data,
                           int ( *myCOMP ) ( COVID19 *, COVID19 * ) )
 {
  COVID19 **p = root;
@@ -60,6 +60,7 @@ static void insert_case ( COVID19 ** root, info_t * info,
  while( 1 ) {
   if( !*p ) {
    *p = malloc ( sizeof ( **p ) );
+   ans.object = jv_copy ( data );
    memcpy ( *p, &ans, sizeof ( ans ) );
    ( *p )->left = NULL;
    ( *p )->right = NULL;
@@ -137,8 +138,7 @@ int showdata ( jv data, COVID19 ** root,
 	};
 	p++;
    }
-
-   insert_case ( root, country_info, myCOMP );
+   insert_case ( root, country_info, tmp, myCOMP );
   }
  }
 }
@@ -207,18 +207,17 @@ void print_case ( COVID19 * root )
  if( !root )
   return;
  print_case ( invert_show ? root->right : root->left );
+ //fprintf ( stderr, "%s %.lf\n", root->Country, root->TotalConfirmed );
+ int opt = 0;                   //JV_PRINT_PRETTY;
+ if( isatty ( STDOUT_FILENO ) )
+  opt |= JV_PRINT_COLOUR;
 
- if( root->TotalConfirmed != 0 ) {
-  double percentage = ( root->TotalRecovered * 100 ) / root->TotalConfirmed;
-  fprintf ( stdout,
-            "Country: %s.\nConfirmed Cases: \033[31m%d\033[0m \nConfirmed -> %.lf\nRecovered -> %.lf\n\n",
-            root->Country, abs ( root->TotalConfirmed - root->TotalRecovered ),
-            root->TotalConfirmed, root->TotalRecovered );
- }
+ jv_dumpf ( root->object, stdout, opt );
+ putchar ( 10 );
  print_case ( !invert_show ? root->right : root->left );
 }
 
-void summary_help (  )
+void summary_help ( struct option *opts )
 {
  fprintf ( stderr, "... summ[ary] <Arguments>\n" );
  fprintf ( stderr, "Arguments:\n" );
@@ -232,7 +231,7 @@ void summary_help (  )
   while( p ) {
    if( !*p )
 	break;
-   fprintf ( stderr, " .. comp %s\n", *p );
+   fprintf ( stderr, " .. --sort %s\n", *p );
    p++;
   }
  }
@@ -275,10 +274,6 @@ int summary_main ( signed Argsc, char *( Args[] ) )
   {"help", 0, NULL, 'h'},
   {"comp", 1, NULL, 'c'},
   {"invert", 0, NULL, 'i'},
-  /*
-     comp yn
-     invert ...
-   */
   {NULL, -1, NULL, 0}
  };
 
@@ -351,5 +346,5 @@ int summary_main ( signed Argsc, char *( Args[] ) )
    fprintf ( stderr, "File Corrupted.\n" );
   }
  } else
-  summary_help (  );
+  summary_help ( myOPTS );
 }

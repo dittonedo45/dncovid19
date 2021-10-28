@@ -4,24 +4,16 @@
 #include <string.h>
 
 int sort_by = NULL;
-int summary_main ( signed Argsc, char *( Args[] ) );
-int nation_main ( signed Argsc, char *( Args[] ) );
+typedef int ( covid_main_t ) ( signed, char ** );
 
 struct myOPTS {
  char *program;
- int ( *main ) ( int, char *( [] ) );
-} ( MAINoptions[] ) = {
- {"summary", summary_main},
- {"international", summary_main},
-
- {"national", nation_main},
- {"country", nation_main},
-
- {NULL, NULL}
-
+ covid_main_t *main;
 };
 
-int main_help (  )
+covid_main_t summary_main, nation_main;
+
+int main_help ( struct myOPTS *MAINoptions )
 {
  fprintf ( stderr, "covid19 [Sub] <args>\n" );
  fprintf ( stderr, "SubPograms:\n" );
@@ -39,9 +31,19 @@ int main_help (  )
 
 int main ( signed Argsc, char *( Args[] ) )
 {
+ struct myOPTS ( MAINoptions[] ) = {
+  {"summary", summary_main},
+  {"international", summary_main},
+
+  {"national", nation_main},
+  {"country", nation_main},
+
+  {NULL, NULL}
+
+ };
  struct myOPTS *p = MAINoptions;
  if( !Args[1] ) {
-  main_help (  );
+  main_help ( MAINoptions );
   return 3;
  }
 
@@ -53,6 +55,6 @@ int main ( signed Argsc, char *( Args[] ) )
   }
   p++;
  }
- main_help (  );
+ main_help ( MAINoptions );
  return 1;
 }
